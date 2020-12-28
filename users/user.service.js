@@ -15,11 +15,10 @@ module.exports = {
     audit
 };
 
-async function authenticate({ username, password, clientIp }) {
+async function authenticate({ username, password, clientIp, loginTime, logoutTime }) {
     const user = await User.findOne({ username });
-    if (user && bcrypt.compareSync(password, user.hash)) {
-        user.loginTime = Date.now();
-        user.logoutTime = null;
+    if (user && !logoutTime && bcrypt.compareSync(password, user.hash)) {
+        user.loginTime = loginTime; user.logoutTime = logoutTime;
         user.clientIp = clientIp;
         user.save();
         const { hash, ...userWithoutHash } = user.toObject();
@@ -28,6 +27,13 @@ async function authenticate({ username, password, clientIp }) {
             ...userWithoutHash,
             token
         };
+    } else if (user && logoutTime) {
+        user.logoutTime = logoutTime;
+        user.save();
+        return {
+            status: 200,
+            message: "User Logged Out Successfully"
+        }
     }
 }
 
@@ -41,7 +47,7 @@ async function getById(id) {
 
 async function create(userParam) {
     // validate
-    userParam.clientIp = 'temp';
+    userParam.clientIp = 'NA';
     if (await User.findOne({ username: userParam.username })) {
         throw 'Username "' + userParam.username + '" is already taken';
     }

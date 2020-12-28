@@ -8,7 +8,7 @@ function errorHandler(err, req, res, next) {
     }
 
     if (err.name === 'InvalidRole') {
-        // Audit Roel required error
+        // Audit Role required error
         return res.status(401).json({ message: err.message });
     }
     
